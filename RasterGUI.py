@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import sys
+import numpy as np
 import ConexCC as cc
 
 print('-'*60)
@@ -20,8 +21,10 @@ class RasterGUI(QDialog):
 		self.height = 600
 		self.laser = QPoint(500,300)
 		self.inc = 10
-		self.xvel = .4
-		self.yvel = .4
+		#defaults
+		self.xvel = 0.4
+		self.yvel = 0.4
+		self.acc = .1
 		self.initUI()
 
 	def initUI(self):
@@ -31,17 +34,22 @@ class RasterGUI(QDialog):
 		self.createCurrent()
 		self.createConfig()
 
-		self.spaceItem = QLabel('		'*6)
+		self.spaceItem = QLabel('		'*5)
 
-		self.ENGAGE = QPushButton('ENGAGE')
+		self.ENGAGE = QPushButton('ENGAGE!')
 		self.ENGAGE.setStyleSheet('background-color: green; font: 20px')
+
+		err_lab = QLabel('ERROR:')
+		self.err_box = QLineEdit('NONE')
 
 		mainLayout = QGridLayout()
 		mainLayout.addWidget(self.ConfBox,0,0)
-		mainLayout.addWidget(self.ENGAGE,0,1)
-		mainLayout.addWidget(self.spaceItem,1,1)
-		mainLayout.addWidget(self.JoyBox,1,2)
-		mainLayout.addWidget(self.CurBox,0,2)
+		mainLayout.addWidget(self.ENGAGE,0,1,1,2)
+		mainLayout.addWidget(self.spaceItem,1,1,1,2)
+		mainLayout.addWidget(self.JoyBox,1,3)
+		mainLayout.addWidget(self.CurBox,0,3)
+		mainLayout.addWidget(err_lab,2,1)
+		mainLayout.addWidget(self.err_box,2,2)
 		self.JoyBox.move(500,500)
 		self.setLayout(mainLayout)
 		self.show()
@@ -74,22 +82,42 @@ class RasterGUI(QDialog):
 
 	def Lbutt_clicked(self):
 		self.laser = QPoint(self.laser.x()-self.inc,self.laser.y())
-		self.Xcur.setText(str(self.laser.x()))
+		if self.on_target():
+			self.err_box.setText('NONE')
+			self.Xcur.setText(str(self.laser.x()))
+		else:
+			self.err_box.setText('OFF TARGET')
+			self.laser = QPoint(self.laser.x()+self.inc,self.laser.y())
 		self.update()
 
 	def Rbutt_clicked(self):
 		self.laser = QPoint(self.laser.x()+self.inc,self.laser.y())
-		self.Xcur.setText(str(self.laser.x()))
+		if self.on_target():
+			self.err_box.setText('NONE')
+			self.Xcur.setText(str(self.laser.x()))
+		else:
+			self.err_box.setText('OFF TARGET')
+			self.laser = QPoint(self.laser.x()-self.inc,self.laser.y())
 		self.update()
 
 	def Ubutt_clicked(self):
 		self.laser = QPoint(self.laser.x(),self.laser.y()-self.inc)
-		self.Ycur.setText(str(self.height-self.laser.y()))
+		if self.on_target():
+			self.err_box.setText('NONE')
+			self.Ycur.setText(str(self.height-self.laser.y()))
+		else:
+			self.err_box.setText('OFF TARGET')
+			self.laser = QPoint(self.laser.x(),self.laser.y()+self.inc)
 		self.update()
 
 	def Dbutt_clicked(self):
 		self.laser = QPoint(self.laser.x(),self.laser.y()+self.inc)
-		self.Ycur.setText(str(self.height-self.laser.y()))
+		if self.on_target():
+			self.err_box.setText('NONE')
+			self.Ycur.setText(str(self.height-self.laser.y()))
+		else:
+			self.err_box.setText('OFF TARGET')
+			self.laser = QPoint(self.laser.x(),self.laser.y()-self.inc)
 		self.update()
 
 	def set_inc_clicked(self):
@@ -135,24 +163,46 @@ class RasterGUI(QDialog):
 		self.yvel_box = QLineEdit(str(self.yvel),self)
 		yvel_set = QPushButton('SET')
 
+		xvel_set.clicked.connect(self.xvel_set_clicked)
+		yvel_set.clicked.connect(self.yvel_set_clicked)
+
 		self.ConfBox = QGroupBox('Configuration')
 		layout = QGridLayout()
 		layout.addWidget(xvel_lab,0,0)
-		layout.addWidget(self.xvel_box,0,1)
-		layout.addWidget(xvel_set,0,2)
+		layout.addWidget(self.xvel_box,0,1,1,2)
+		layout.addWidget(xvel_set,0,3)
 		layout.addWidget(yvel_lab,1,0)
-		layout.addWidget(self.yvel_box,1,1)
-		layout.addWidget(yvel_set,1,2)
+		layout.addWidget(self.yvel_box,1,1,1,2)
+		layout.addWidget(yvel_set,1,3)
 		self.ConfBox.setLayout(layout)
+
+	def xvel_set_clicked(self):
+		self.xvel = float(self.xvel_box.text())
+		self.update()
+
+	def yvel_set_clicked(self):
+		self.yvel = float(self.yvel_box.text())
+		self.update()
 
 	def paintEvent(self,event):
 		qp = QPainter(self)
+		qp.setPen(Qt.black)
+		qp.setBrush(Qt.black)
+		qp.drawEllipse(296,100,404,400)
 		qp.setPen(QColor(175,100,0))
 		qp.setBrush(QColor(175,100,0))
 		qp.drawEllipse(300,100,400,400)
 		qp.setPen(Qt.black)
 		qp.setBrush(Qt.green)
 		qp.drawEllipse(self.laser,4,4)
+
+	def on_target(self):
+		r = np.sqrt((self.laser.x()-500)**2+(self.laser.y()-300)**2)
+		#print(r)
+		if r <= 200:
+			return True
+		else:
+			return False
 
 
 
