@@ -29,7 +29,7 @@ command.  This package should come default with your python 3 installation.
 
 ### Usage
 
-The ConexCC package implements all the commands that the actuator controller can receive.  In essence, the class (when called) creates a "ConexCC" object.  The "__init__" function initializes the motor and makes it ready for use. The motor object has a fundamental "query" function on which all other functions rely.  Each individual function is named after its command, and uses the "query" function to send the command and receive a response (if any).  (See CONEX-CC_Controller_Documentation.pdf for full listing of commands and how they work and what they return.)
+The ConexCC package implements all the commands that the actuator controller can receive.  In essence, the class (when called) creates a "ConexCC" object.  The "init" function initializes the motor and makes it ready for use. The motor object has a fundamental "query" function on which all other functions rely.  Each individual function is named after its command, and uses the "query" function to send the command and receive a response (if any).  (See CONEX-CC_Controller_Documentation.pdf for full listing of commands and how they work and what they return.)
 
 NOTE: It is very important to pay attention to the Controller State Diagram (see Page 5 of CONEX-CC_Controller_Documentation.pdf).  Some commands can only be received in certain states and as of now the package DOES NOT THROW AND ERROR IF THE STATE IS WRONG!  So be careful!
 
