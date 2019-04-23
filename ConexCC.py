@@ -13,6 +13,7 @@ class ConexCC():
 		self.sr = float(self.SR('?'))
 		self.dv = float(self.DV('?'))
 
+
 		self.OR()
 		self.TK(1)
 
