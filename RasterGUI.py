@@ -20,7 +20,7 @@ class MainWindow(QMainWindow):
 		self.central_widget = RasterGUI(self)
 		self.setCentralWidget(self.central_widget)
 
-		self.port_win = ComSelect()
+		self.port_win = ComSelect(self)
 
 		exit_action = QAction('Quit',self)
 		exit_action.triggered.connect(qApp.quit)
@@ -60,9 +60,10 @@ class MainWindow(QMainWindow):
 
 
 class ComSelect(QWidget):
-	def __init__(self):
+	def __init__(self,main_win):
 		global xport
 		global yport
+		self.main_win = main_win
 		QWidget.__init__(self)
 		qbut = QPushButton('Close')
 		qbut.clicked.connect(self.close_win)
@@ -97,8 +98,11 @@ class ComSelect(QWidget):
 		elif len(chkd) < 2:
 			err = ComUnderError().exec_()
 		else:
-			xport = chkd[0]
-			yport = chkd[1]
+			xport = chkd[0].text()
+			yport = chkd[1].text()
+			self.main_win.central_widget.xport_lab.setText(xport)
+			self.main_win.central_widget.yport_lab.setText(yport)
+			self.main_win.update()
 			self.close()
 
 class ComOverError(QMessageBox):
@@ -367,7 +371,7 @@ class RasterGUI(QWidget):
 
 		global xport
 		global yport
-		print(xport,yport)
+		#print(xport,yport)
 		xport_name = QLabel('X Port:')
 		yport_name = QLabel('Y Port:')
 		self.xport_lab = QLabel(xport)
