@@ -6,10 +6,6 @@ import sys
 import numpy as np
 import ConexCC as cc
 
-print('-'*60)
-print('-'*60)
-print('STARTING RASTER GUI')
-print('-'*60)
 
 class MainWindow(QMainWindow):
 	def __init__(self):
@@ -54,12 +50,17 @@ class RasterGUI(QWidget):
 		self.top = 50
 		self.width = 1100
 		self.height = 600
-		self.laser = QPoint(550,300)
+		self.laser = QPoint(self.width/2,self.height/2)
 		self.inc = 10
 		#defaults
 		self.xvel = 0.4
 		self.yvel = 0.4
+		self.xmin = 3.6
+		self.xmax = 4.8
+		self.ymin = 3.6
+		self.ymax = 4.8
 		self.acc = .1
+		self.pix = 400
 		self.initUI()
 
 	def initUI(self):
@@ -68,6 +69,7 @@ class RasterGUI(QWidget):
 		self.createJoystick()
 		self.createCurrent()
 		self.createConfig()
+		self.createCalib()
 
 		self.spaceItem = QLabel('	'*9)
 
@@ -83,6 +85,7 @@ class RasterGUI(QWidget):
 		mainLayout.addWidget(self.spaceItem,1,1,1,2)
 		mainLayout.addWidget(self.JoyBox,1,3)
 		mainLayout.addWidget(self.CurBox,0,3)
+		mainLayout.addWidget(self.CalBox,1,0)
 		mainLayout.addWidget(err_lab,2,1)
 		mainLayout.addWidget(self.err_box,2,2)
 		self.JoyBox.move(500,500)
@@ -159,6 +162,62 @@ class RasterGUI(QWidget):
 	def set_inc_clicked(self):
 		self.inc = float(self.inc_box.text())
 
+	def createCalib(self):
+		xmin_label = QLabel('X Min:')
+		xmax_label = QLabel('X Max:')
+		ymin_label = QLabel('Y Min:')
+		ymax_label = QLabel('Y Max:')
+		self.xmin_box = QLineEdit(str(self.xmin))
+		self.xmax_box = QLineEdit(str(self.xmax))
+		self.ymin_box = QLineEdit(str(self.ymin))
+		self.ymax_box = QLineEdit(str(self.ymax))
+		xmin_set = QPushButton('Set')
+		xmax_set = QPushButton('Set')
+		ymin_set = QPushButton('Set')
+		ymax_set = QPushButton('Set')
+
+		xmin_set.clicked.connect(self.xmin_set_clicked)
+		xmax_set.clicked.connect(self.xmax_set_clicked)
+		ymin_set.clicked.connect(self.ymin_set_clicked)
+		ymax_set.clicked.connect(self.ymax_set_clicked)
+		self.xmin_box.returnPressed.connect(xmin_set.click)
+		self.xmax_box.returnPressed.connect(xmax_set.click)
+		self.ymin_box.returnPressed.connect(ymin_set.click)
+		self.ymax_box.returnPressed.connect(ymax_set.click)
+
+		self.CalBox = QGroupBox('Calibration')
+		layout = QGridLayout()
+		layout.addWidget(xmin_label,0,0)
+		layout.addWidget(xmax_label,1,0)
+		layout.addWidget(ymin_label,2,0)
+		layout.addWidget(ymax_label,3,0)
+		layout.addWidget(self.xmin_box,0,1)
+		layout.addWidget(self.xmax_box,1,1)
+		layout.addWidget(self.ymin_box,2,1)
+		layout.addWidget(self.ymax_box,3,1)
+		layout.addWidget(xmin_set,0,2)
+		layout.addWidget(xmax_set,1,2)
+		layout.addWidget(ymin_set,2,2)
+		layout.addWidget(ymax_set,3,2)
+		self.CalBox.setLayout(layout)
+
+	def xmin_set_clicked(self):
+		self.xmin = float(self.xmin_box.text())
+		self.update()
+
+	def xmax_set_clicked(self):
+		self.xmax = float(self.xmax_box.text())
+		self.update()
+
+	def ymin_set_clicked(self):
+		self.ymin = float(self.ymin_box.text())
+		self.update()
+
+	def ymax_set_clicked(self):
+		self.ymax = float(self.ymax_box.text())
+		self.update()
+
+
 	def createCurrent(self):
 		Xcur_label = QLabel('X Position:')
 		Ycur_label = QLabel('Y Position:')
@@ -228,7 +287,7 @@ class RasterGUI(QWidget):
 		qp = QPainter(self)
 		qp.setPen(Qt.black)
 		qp.setBrush(Qt.black)
-		targ_vals = [350,100,400,400]
+		targ_vals = [(self.width/2)-(self.pix/2),(self.height/2)-(self.pix/2),self.pix,self.pix]
 		qp.drawEllipse(targ_vals[0]-4,targ_vals[1],targ_vals[2]+4,targ_vals[3])
 		qp.setPen(QColor(175,100,0))
 		qp.setBrush(QColor(175,100,0))
@@ -267,6 +326,10 @@ def set_dark(app):
 
 
 if __name__ == '__main__':
+	#print('-'*60)
+	#print('-'*60)
+	#print('STARTING RASTER GUI')
+	#print('-'*60)
 	app = QApplication(sys.argv)
 	app.setStyle('Fusion')
 	set_dark(app)
