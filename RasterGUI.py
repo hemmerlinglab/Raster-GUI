@@ -6,6 +6,8 @@ import sys
 import numpy as np
 import ConexCC as cc
 
+xport = 'COM6'
+yport = 'COM7'
 
 class MainWindow(QMainWindow):
 	def __init__(self):
@@ -18,22 +20,99 @@ class MainWindow(QMainWindow):
 		self.central_widget = RasterGUI(self)
 		self.setCentralWidget(self.central_widget)
 
+		self.port_win = ComSelect()
+
 		exit_action = QAction('Quit',self)
 		exit_action.triggered.connect(qApp.quit)
+		port_action = QAction('Port List',self)
+		port_action.triggered.connect(self.port_win.show)
+		swap_action = QAction('Swap X/Y',self)
+		swap_action.triggered.connect(self.PortSwap)
 
 		menu_bar = self.menuBar()
 		menu_bar.setNativeMenuBar(False)
 		file_menu = menu_bar.addMenu('File')
 		file_menu.addAction(exit_action)
+		port_menu = menu_bar.addMenu('Ports')
+		port_menu.addAction(port_action)
+		port_menu.addAction(swap_action)
 
 		self.show()
 
+	def PortSwap(self):
+		global xport
+		global yport
+		new_yport = xport
+		new_xport = yport
+		xport = new_xport
+		yport = new_yport
+		#print(xport,yport)
+		self.central_widget.xport_lab.setText(xport)
+		self.central_widget.yport_lab.setText(yport)
+
 	def closeEvent(self,event):
 		reply = QuitMessage().exec_()
-		if reply ==QMessageBox.Yes:
+		if reply == QMessageBox.Yes:
 			event.accept()
 		else:
 			event.ignore()
+
+
+
+class ComSelect(QWidget):
+	def __init__(self):
+		global xport
+		global yport
+		QWidget.__init__(self)
+		qbut = QPushButton('Close')
+		qbut.clicked.connect(self.close_win)
+		devbox = QGroupBox('USB Devices')
+
+		devs = ['COM6','COM7','COM12']
+
+		devlay = QVBoxLayout()
+		self.chks = []
+		for dev in devs:
+			newchk = QCheckBox(dev,self)
+			if dev == xport or dev == yport:
+				newchk.toggle()
+			self.chks.append(newchk)
+			devlay.addWidget(newchk)
+		devbox.setLayout(devlay)
+
+		layout = QVBoxLayout()
+		layout.addWidget(devbox)
+		layout.addWidget(qbut)
+		self.setLayout(layout)
+
+	def close_win(self):
+		global xport
+		global yport
+		chkd = []
+		for chk in self.chks:
+			if chk.isChecked():
+				chkd.append(chk)
+		if len(chkd) > 2:
+			err = ComOverError().exec_()
+		elif len(chkd) < 2:
+			err = ComUnderError().exec_()
+		else:
+			xport = chkd[0]
+			yport = chkd[1]
+			self.close()
+
+class ComOverError(QMessageBox):
+	def __init__(self):
+		QMessageBox.__init__(self)
+		self.setText('Too many ports selected!')
+		self.addButton(self.Ok)
+
+class ComUnderError(QMessageBox):
+	def __init__(self):
+		QMessageBox.__init__(self)
+		self.setText('Too few ports selected!')
+		self.addButton(self.Ok)
+
 
 class QuitMessage(QMessageBox):
 	def __init__(self):
@@ -286,6 +365,14 @@ class RasterGUI(QWidget):
 		self.yvel_box = QLineEdit(str(self.yvel),self)
 		yvel_set = QPushButton('SET')
 
+		global xport
+		global yport
+		print(xport,yport)
+		xport_name = QLabel('X Port:')
+		yport_name = QLabel('Y Port:')
+		self.xport_lab = QLabel(xport)
+		self.yport_lab = QLabel(yport)
+
 		xvel_set.clicked.connect(self.xvel_set_clicked)
 		yvel_set.clicked.connect(self.yvel_set_clicked)
 		self.xvel_box.returnPressed.connect(xvel_set.click)
@@ -299,6 +386,10 @@ class RasterGUI(QWidget):
 		layout.addWidget(yvel_lab,1,0)
 		layout.addWidget(self.yvel_box,1,1)
 		layout.addWidget(yvel_set,1,2)
+		layout.addWidget(xport_name,2,0)
+		layout.addWidget(self.xport_lab,2,1)
+		layout.addWidget(yport_name,3,0)
+		layout.addWidget(self.yport_lab,3,1)
 		self.ConfBox.setLayout(layout)
 
 	def xvel_set_clicked(self):
@@ -322,8 +413,8 @@ class RasterGUI(QWidget):
 		qp.drawEllipse(QPoint(self.mmtpx(self.laser[0]-self.xmin)+self.ulx,self.mmtpy(self.laser[1]-self.ymin)+self.uly),5,5)
 
 	def on_target(self):
-		r = np.sqrt(self.mmtpx(self.laser[0]-self.center[0])**2+self.mmtpy(self.laser[1]-self.center[1])**2)
-		print(r)
+		r = np.sqrt(self.mmtpx((self.laser[0]-self.center[0])**2)+self.mmtpy((self.laser[1]-self.center[1])**2))
+		#print(r)
 		if r <= self.pix/2:
 			return True
 		else:
