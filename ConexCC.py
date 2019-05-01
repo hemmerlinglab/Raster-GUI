@@ -32,6 +32,8 @@ class ConexCC():
 				return ret
 			elif '\r' in ret:
 				return ret.split('\r')[0].split(AA)[1]
+			else:
+				return 'meercat'
 		except:
 			return 'possum'
 

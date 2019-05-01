@@ -11,15 +11,50 @@ print('-'*60)
 print('STARTING RASTER GUI')
 print('-'*60)
 
-class RasterGUI(QDialog):
+class MainWindow(QMainWindow):
+	def __init__(self):
+		QMainWindow.__init__(self)
+		self.setup()
+
+	def setup(self):
+		self.setGeometry(0,0,1100,600)
+		self.setWindowTitle('Main Window')
+		self.central_widget = RasterGUI(self)
+		self.setCentralWidget(self.central_widget)
+
+		exit_action = QAction('Quit',self)
+		exit_action.triggered.connect(qApp.quit)
+
+		menu_bar = self.menuBar()
+		menu_bar.setNativeMenuBar(False)
+		file_menu = menu_bar.addMenu('File')
+		file_menu.addAction(exit_action)
+
+		self.show()
+
+	def closeEvent(self,event):
+		reply = QuitMessage().exec_()
+		if reply ==QMessageBox.Yes:
+			event.accept()
+		else:
+			event.ignore()
+
+class QuitMessage(QMessageBox):
+	def __init__(self):
+		QMessageBox.__init__(self)
+		self.setText('Are you sure you want to quit?')
+		self.addButton(self.No)
+		self.addButton(self.Yes)
+
+class RasterGUI(QWidget):
 	def __init__(self,parent=None):
 		super().__init__()
 		self.title = 'Raster GUI'
 		self.left = 50
 		self.top = 50
-		self.width = 1000
+		self.width = 1100
 		self.height = 600
-		self.laser = QPoint(500,300)
+		self.laser = QPoint(550,300)
 		self.inc = 10
 		#defaults
 		self.xvel = 0.4
@@ -34,7 +69,7 @@ class RasterGUI(QDialog):
 		self.createCurrent()
 		self.createConfig()
 
-		self.spaceItem = QLabel('		'*5)
+		self.spaceItem = QLabel('	'*9)
 
 		self.ENGAGE = QPushButton('ENGAGE!')
 		self.ENGAGE.setStyleSheet('background-color: green; font: 20px')
@@ -68,6 +103,7 @@ class RasterGUI(QDialog):
 		Ubutt.clicked.connect(self.Ubutt_clicked)
 		Dbutt.clicked.connect(self.Dbutt_clicked)
 		set_inc.clicked.connect(self.set_inc_clicked)
+		self.inc_box.returnPressed.connect(set_inc.click)
 
 		self.JoyBox = QGroupBox('Motor Control')
 		layout = QGridLayout()
@@ -135,6 +171,8 @@ class RasterGUI(QDialog):
 
 		Xset.clicked.connect(self.Xset_clicked)
 		Yset.clicked.connect(self.Yset_clicked)
+		self.Xcur.returnPressed.connect(Xset.click)
+		self.Ycur.returnPressed.connect(Yset.click)
 
 		self.CurBox = QGroupBox('Absolute Positions')
 		layout = QGridLayout()
@@ -152,7 +190,7 @@ class RasterGUI(QDialog):
 		self.update()
 
 	def Yset_clicked(self):
-		self.laser = QPoint(self.laser.x(),float(self.Ycur.text()))
+		self.laser = QPoint(self.laser.x(),self.height-float(self.Ycur.text()))
 		self.update()
 
 	def createConfig(self):
@@ -165,15 +203,17 @@ class RasterGUI(QDialog):
 
 		xvel_set.clicked.connect(self.xvel_set_clicked)
 		yvel_set.clicked.connect(self.yvel_set_clicked)
+		self.xvel_box.returnPressed.connect(xvel_set.click)
+		self.yvel_box.returnPressed.connect(yvel_set.click)
 
 		self.ConfBox = QGroupBox('Configuration')
 		layout = QGridLayout()
 		layout.addWidget(xvel_lab,0,0)
-		layout.addWidget(self.xvel_box,0,1,1,2)
-		layout.addWidget(xvel_set,0,3)
+		layout.addWidget(self.xvel_box,0,1)
+		layout.addWidget(xvel_set,0,2)
 		layout.addWidget(yvel_lab,1,0)
-		layout.addWidget(self.yvel_box,1,1,1,2)
-		layout.addWidget(yvel_set,1,3)
+		layout.addWidget(self.yvel_box,1,1)
+		layout.addWidget(yvel_set,1,2)
 		self.ConfBox.setLayout(layout)
 
 	def xvel_set_clicked(self):
@@ -188,27 +228,24 @@ class RasterGUI(QDialog):
 		qp = QPainter(self)
 		qp.setPen(Qt.black)
 		qp.setBrush(Qt.black)
-		qp.drawEllipse(296,100,404,400)
+		targ_vals = [350,100,400,400]
+		qp.drawEllipse(targ_vals[0]-4,targ_vals[1],targ_vals[2]+4,targ_vals[3])
 		qp.setPen(QColor(175,100,0))
 		qp.setBrush(QColor(175,100,0))
-		qp.drawEllipse(300,100,400,400)
+		qp.drawEllipse(targ_vals[0],targ_vals[1],targ_vals[2],targ_vals[3])
 		qp.setPen(Qt.black)
 		qp.setBrush(Qt.green)
-		qp.drawEllipse(self.laser,4,4)
+		qp.drawEllipse(self.laser,5,5)
 
 	def on_target(self):
-		r = np.sqrt((self.laser.x()-500)**2+(self.laser.y()-300)**2)
+		r = np.sqrt((self.laser.x()-550)**2+(self.laser.y()-300)**2)
 		#print(r)
 		if r <= 200:
 			return True
 		else:
 			return False
 
-
-
-if __name__ == '__main__':
-	app = QApplication(sys.argv)
-	app.setStyle('Fusion')
+def set_dark(app):
 	dark_palette = QPalette()
 	dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
 	dark_palette.setColor(QPalette.WindowText, Qt.white)
@@ -225,5 +262,13 @@ if __name__ == '__main__':
 	dark_palette.setColor(QPalette.HighlightedText, Qt.black)
 	app.setPalette(dark_palette)
 	app.setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }")
-	gui = RasterGUI()
+
+
+
+
+if __name__ == '__main__':
+	app = QApplication(sys.argv)
+	app.setStyle('Fusion')
+	set_dark(app)
+	gui = MainWindow()
 	sys.exit(app.exec_())
