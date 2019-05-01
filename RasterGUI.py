@@ -50,7 +50,6 @@ class RasterGUI(QWidget):
 		self.top = 50
 		self.width = 1100
 		self.height = 600
-		self.laser = QPoint(self.width/2,self.height/2)
 		self.inc = 0.01
 		#defaults
 		self.xvel = 0.4
@@ -59,6 +58,8 @@ class RasterGUI(QWidget):
 		self.xmax = 4.8
 		self.ymin = 3.6
 		self.ymax = 4.8
+		self.center = [(self.xmin+self.xmax)/2,(self.ymin+self.ymax)/2]
+		self.laser = self.center
 		self.acc = .1
 		self.pix = 400
 		self.ulx = self.width/2-self.pix/2
@@ -77,15 +78,15 @@ class RasterGUI(QWidget):
 		px = int(mm*slp)
 		return px
 
-	def ptmmx(self,px):
-		slp = (self.xmax-self.xmin)/self.pix
-		mm = px*slp
-		return mm
+	# def ptmmx(self,px):
+	# 	slp = (self.xmax-self.xmin)/self.pix
+	# 	mm = px*slp
+	# 	return mm
 
-	def ptmmy(self,px):
-		slp = (self.ymax-self.ymin)/self.pix
-		mm = px*slp
-		return mm
+	# def ptmmy(self,px):
+	# 	slp = (self.ymax-self.ymin)/self.pix
+	# 	mm = px*slp
+	# 	return mm
 
 
 	def initUI(self):
@@ -145,43 +146,43 @@ class RasterGUI(QWidget):
 		self.JoyBox.setLayout(layout)
 
 	def Lbutt_clicked(self):
-		self.laser = QPoint(self.laser.x()-(self.mmtpx(self.inc)-int(self.width/2-self.pix/2)),self.laser.y())
+		self.laser = [self.laser[0]-self.inc,self.laser[1]]
 		if self.on_target():
 			self.err_box.setText('NONE')
-			self.Xcur.setText(str(self.ptmmx(self.laser.x())))
+			self.Xcur.setText(str(self.laser[0]))
 		else:
 			self.err_box.setText('OFF TARGET')
-			self.laser = QPoint(self.laser.x()+(self.mmtpx(self.inc)-int(self.width/2-self.pix/2)),self.laser.y())
+			self.laser = [self.laser[0]+self.inc,self.laser[1]]
 		self.update()
 
 	def Rbutt_clicked(self):
-		self.laser = QPoint(self.laser.x()+(self.mmtpx(self.inc)-int(self.width/2-self.pix/2)),self.laser.y())
+		self.laser = [self.laser[0]+self.inc,self.laser[1]]
 		if self.on_target():
 			self.err_box.setText('NONE')
-			self.Xcur.setText(str(self.ptmmx(self.laser.x())))
+			self.Xcur.setText(str(self.ptmmx(self.laser[0])))
 		else:
 			self.err_box.setText('OFF TARGET')
-			self.laser = QPoint(self.laser.x()-(self.mmtpx(self.inc)-int(self.width/2-self.pix/2)),self.laser.y())
+			self.laser = [self.laser[0]-self.inc,self.laser[1]]
 		self.update()
 
 	def Ubutt_clicked(self):
-		self.laser = QPoint(self.laser.x(),self.laser.y()-(self.mmtpy(self.inc)-int(self.height/2-self.pix/2)))
+		self.laser = QPoint(self.laser[0],self.laser[1]-(self.mmtpy(self.inc)-int(self.height/2-self.pix/2)))
 		if self.on_target():
 			self.err_box.setText('NONE')
-			self.Ycur.setText(str(self.ptmmy(self.height-self.laser.y())))
+			self.Ycur.setText(str(self.ptmmy(self.height-self.laser[1])))
 		else:
 			self.err_box.setText('OFF TARGET')
-			self.laser = QPoint(self.laser.x(),self.laser.y()+(self.mmtpy(self.inc)-int(self.height/2-self.pix/2)))
+			self.laser = QPoint(self.laser[0],self.laser[1]+(self.mmtpy(self.inc)-int(self.height/2-self.pix/2)))
 		self.update()
 
 	def Dbutt_clicked(self):
-		self.laser = QPoint(self.laser.x(),self.laser.y()+(self.mmtpy(self.inc)-int(self.height/2-self.pix/2)))
+		self.laser = QPoint(self.laser[0],self.laser[1]+(self.mmtpy(self.inc)-int(self.height/2-self.pix/2)))
 		if self.on_target():
 			self.err_box.setText('NONE')
 			self.Ycur.setText(str(self.ptmmy(self.height-self.laser.y())))
 		else:
 			self.err_box.setText('OFF TARGET')
-			self.laser = QPoint(self.laser.x(),self.laser.y()-(self.mmtpy(self.inc)-int(self.height/2-self.pix/2)))
+			self.laser = QPoint(self.laser[0],self.laser[1]-(self.mmtpy(self.inc)-int(self.height/2-self.pix/2)))
 		self.update()
 
 	def set_inc_clicked(self):
@@ -246,8 +247,8 @@ class RasterGUI(QWidget):
 	def createCurrent(self):
 		Xcur_label = QLabel('X Position:')
 		Ycur_label = QLabel('Y Position:')
-		self.Xcur = QLineEdit(str(self.ptmmx(self.laser.x())),self)
-		self.Ycur = QLineEdit(str(self.ptmmy(self.height-self.laser.y())),self)
+		self.Xcur = QLineEdit(str(self.laser[0]),self)
+		self.Ycur = QLineEdit(str(self.laser[1]),self)
 		Xset = QPushButton('GO')
 		Yset = QPushButton('GO')
 		Sbutt = QPushButton('STOP')
@@ -270,11 +271,11 @@ class RasterGUI(QWidget):
 		self.CurBox.setLayout(layout)
 
 	def Xset_clicked(self):
-		self.laser = QPoint(self.mmtpx(float(self.Xcur.text())),self.laser.y())
+		self.laser = [float(self.Xcur.text()),self.laser[1]]
 		self.update()
 
 	def Yset_clicked(self):
-		self.laser = QPoint(self.laser.x(),self.height-self.mmtpy(float(self.Ycur.text())))
+		self.laser = [self.laser[0],float(self.Ycur.text())]
 		self.update()
 
 	def createConfig(self):
@@ -312,17 +313,16 @@ class RasterGUI(QWidget):
 		qp = QPainter(self)
 		qp.setPen(Qt.black)
 		qp.setBrush(Qt.black)
-		targ_vals = [(self.width/2)-(self.pix/2),(self.height/2)-(self.pix/2),self.pix,self.pix]
-		qp.drawEllipse(targ_vals[0]-4,targ_vals[1],targ_vals[2]+4,targ_vals[3])
+		qp.drawEllipse(self.ulx-4,self.uly,self.pix+4,self.pix)
 		qp.setPen(QColor(175,100,0))
 		qp.setBrush(QColor(175,100,0))
-		qp.drawEllipse(targ_vals[0],targ_vals[1],targ_vals[2],targ_vals[3])
+		qp.drawEllipse(self.ulx,self.uly,self.pix,self.pix)
 		qp.setPen(Qt.black)
 		qp.setBrush(Qt.green)
-		qp.drawEllipse(self.laser,5,5)
+		qp.drawEllipse(QPoint(self.mmtpx(self.laser[0]-self.xmin)+self.ulx,self.mmtpy(self.laser[1]-self.ymin)+self.uly),5,5)
 
 	def on_target(self):
-		r = np.sqrt((self.laser.x()-self.height/2)**2+(self.laser.y()-self.width/2)**2)
+		r = np.sqrt((self.laser[0]-self.center[0]/2)**2+(self.laser[1]-self.center[1]/2)**2)
 		print(r)
 		if r <= self.pix/2:
 			return True
