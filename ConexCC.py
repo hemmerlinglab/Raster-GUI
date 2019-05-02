@@ -1,4 +1,9 @@
 import serial
+import time
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+import sys
 
 class ConexCC():
 	def __init__(self,port):
@@ -11,11 +16,12 @@ class ConexCC():
 		self.ser = serial.Serial(self.port,baudrate=self.bps,timeout=1.0,parity=serial.PARITY_NONE,stopbits = serial.STOPBITS_ONE,bytesize=serial.EIGHTBITS)
 		self.sl = float(self.SL('?'))
 		self.sr = float(self.SR('?'))
-		self.dv = float(self.DV('?'))
+		#self.dv = float(self.DV('?'))
+		#print(self.sl,self.sr)
 
-
+		self.RS()
 		self.OR()
-		self.TK(1)
+		#self.TK(1)
 
 	def query(self,nn,AA,xx): # send query/command to motor, nn = addr, AA = command, xx = parameter
 		#print('COMMAND: {}{}{}'.format(nn,AA,xx))
@@ -23,6 +29,7 @@ class ConexCC():
 			xx = str(xx)
 		if type(nn) != 'str':
 			nn = str(nn)
+		#print(nn,AA,xx)
 		self.ser.write(nn.encode()+AA.encode()+xx.encode()+self.term)
 		try:
 			ret = self.ser.readline().decode()
@@ -349,6 +356,43 @@ class ConexCC():
 	def close(self):
 		self.ser.close()
 
+class ComTestGui(QWidget):
+	def __init__(self,port):
+		QWidget.__init__(self)
+		self.port = port
+		self.setup()
+		self.show()
+
+	def setup(self):
+		self.CC = ConexCC(self.port)
+		com_lab = QLabel(self.port)
+		self.com_log = QPlainTextEdit(self)
+		self.com_ent = QLineEdit(self)
+		com_but = QPushButton('SEND',self)
+		com_but.clicked.connect(self.send_com)
+		self.com_ent.returnPressed.connect(com_but.click)
+
+		layout = QGridLayout()
+		layout.addWidget(com_lab,0,0)
+		layout.addWidget(self.com_log,1,0,1,2)
+		layout.addWidget(self.com_ent,2,0)
+		layout.addWidget(com_but,2,1)
+		self.setLayout(layout)
+
+	def send_com(self):
+		com = self.com_ent.text()
+		aa = com[:2]
+		vl = com[2:]
+		#print(aa,vl)
+		self.com_log.insertPlainText(aa+' '+vl+' ')
+		self.com_log.insertPlainText(self.CC.query(1,aa,vl)+' ')
+		self.com_log.insertPlainText(self.CC.TE()+' ')
+		self.com_log.insertPlainText(self.CC.TS()+'\n')
+		self.com_ent.setText('')
+
+
+
+
 
 if __name__ == '__main__':
 	# motors on COM ports 6 and 7
@@ -356,16 +400,38 @@ if __name__ == '__main__':
 	print('-'*60)
 	print('TEST OF MOTOR CONTROL')
 	print('-'*60)
-	xport = 'COM6'
-	yport = 'COM7'
-	print('X MOTOR OPEN ON {}'.format(xport))
-	CCX = ConexCC(xport)
-	print('X :',CCX.TP())
-	print('Y MOTOR OPEN ON {}'.format(yport))
-	CCY = ConexCC(yport)
-	print('Y :',CCY.TP())
+	#xport = 'COM12'
+	#yport = 'COM7'
+	#print('X MOTOR OPEN ON {}'.format(xport))
+	#CCX = ConexCC(xport)
 
+	app = QApplication(sys.argv)
+	app.setStyle('Fusion')
+	XLOG = ComTestGui('COM12')
+	YLOG = ComTestGui('COM7')
+	sys.exit(app.exec_())
+	
 
+	#print('X Vel:',CCX.VA('?'))
+	#time.sleep(10)
+	#CCX.RS()
+	#print('X :',CCX.TP())
+	#print('Y MOTOR OPEN ON {}'.format(yport))
+	#CCY = ConexCC(yport)
+	#print('Y :',CCY.TP())
+	#print('TS:',CCX.TS())
+	#CCX.TK(1)
+	#CCX.SC(0)
+	#print(CCX.TE(),end=' ')
+	#print(CCX.TS())
+	#print('PA:',end=' ')
+	#CCX.PA(3.0)
+	#print(CCX.TE(),end=' ')
+	#print(CCX.TS())
+	#print('XT:',CCX.ZT())
+	#time.sleep(10)
+	#print(CCX.TP(),end=' ')
+	#print()
 	print('-'*60)
 	print('TEST FINISHED')
 

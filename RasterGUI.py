@@ -4,9 +4,9 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import sys
 import numpy as np
-import ConexCC as cc
+import ConexCC
 
-xport = 'COM6'
+xport = 'COM12'
 yport = 'COM7'
 
 class MainWindow(QMainWindow):
@@ -417,7 +417,7 @@ class RasterGUI(QWidget):
 		qp.drawEllipse(QPoint(self.mmtpx(self.laser[0]-self.xmin)+self.ulx,self.mmtpy(self.laser[1]-self.ymin)+self.uly),5,5)
 
 	def on_target(self):
-		r = np.sqrt(self.mmtpx((self.laser[0]-self.center[0])**2)+self.mmtpy((self.laser[1]-self.center[1])**2))
+		r = np.sqrt(self.mmtpx(self.laser[0]-self.center[0])**2+self.mmtpy(self.laser[1]-self.center[1])**2)
 		#print(r)
 		if r <= self.pix/2:
 			return True
